@@ -1,6 +1,6 @@
 /*
 * COBS encoding and decoding functions.
-* Shamelessly lifted from
+* The encode function was shamelessly lifted from
 * https://github.com/bakercp/PacketSerial/blob/master/src/Encoding/COBS.h
 *
 * @date 10/13/2019
@@ -70,6 +70,11 @@ size_t cobs::encode(const uint8_t* buffer,
      */
     encoded_buffer[code_index] = code;
 
+    /*
+     * Add trailing zero to mark the end of message.
+     */ 
+    encoded_buffer[write_index++] = 0;
+
     return write_index;
 }
 
@@ -86,84 +91,79 @@ size_t cobs::encode(const uint8_t* buffer,
  * be decoded.
  */
 size_t cobs::decode(const uint8_t* encoded_buffer,
-              size_t size,
-              uint8_t* decoded_buffer)
+                    size_t size,
+                    uint8_t* decoded_buffer)
 {
     /*
-     * Return failure if input buffer is empty.
+     * Return immediately if the input buffer is empty.
      */
+
     if (size == 0)
-         return 0;
-
-    /*
-     * Set initial indices and values.
-     */
-    size_t read_index = 0;
-    size_t write_index = 0;
-    uint8_t code = 0;
-    uint8_t i = 0;
-
-    /*
-     * Loop through buffer until a nonzero value is found
-     * to remove leading zeroes.
-     */
-    while (encoded_buffer[read_index] == 0)
     {
-        /*
-         * Return failure if the entire input buffer is consumed.
-         */
-        if (++read_index == size)
-        {
-          return 0;
-        }
+        return 0;
     }
 
     /*
-     * Loop until entire input buffer is consumed.
-     */      
-    while (read_index < size)
+     * Initialize state variables and pointers
+     */
+    bool is_zero = false;
+    size_t read_index = 0;
+    size_t write_index = 0;
+
+    while(read_index < size)
     {
-        /*
-         * Get code from current position in source buffer.
-         */
-        code = encoded_buffer[read_index];
+        uint8_t code_count = encoded_buffer[read_index++];
 
         /*
-         * Stop if code equals 0.
+         * The frame is complete if the count is 0.
          */
-        if (code == 0)
+        if(code_count == 0)
         {
             return write_index;
         }
 
         /*
-         * Return failure if next code is out of bounds.
+         * Add a zero to the output if this iteration should add a 0.
          */
-        if (read_index + code > size && code != 1)
+        if(is_zero)
+        {
+            decoded_buffer[write_index++] = 0;
+        }
+
+        /*
+         * Return in failure if the input buffer is smaller than indicated
+         * by the code count.
+         */
+        if(size < read_index + code_count - 1)
         {
             return 0;
         }
 
-        read_index++;
-
         /*
-         * Loop through values until next code.
+         * Loop through the code count - 1. The last element is the next 
+         * code count.
          */
-        for (i = 1; i < code; i++)
+        for(uint8_t count = 0; count < code_count - 1; count++)
         {
+            uint8_t read_val = encoded_buffer[read_index++];
+
             /*
-             * Place current value into decoded buffer unless it is 0,
-             * then return in failure.
+             * If the read value at this point is 0, this is not a valid 
+             * COBS frame.
              */
-            if(encoded_buffer[read_index] != 0)
-            {
-                decoded_buffer[write_index++] = encoded_buffer[read_index++];
-            }
-            else
+            if(read_val == 0)
             {
                 return 0;
             }
+
+            decoded_buffer[write_index++] = read_val;
         }
+
+        /*
+         * If the code count is 255, then there is not a zero following 
+         * the set of nonzero reads.
+         */
+        is_zero = code_count != 0xFF;
     }
 
     return write_index;

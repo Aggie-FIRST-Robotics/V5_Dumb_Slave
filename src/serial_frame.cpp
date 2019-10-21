@@ -54,9 +54,10 @@ uint8_t serial_command::checksum()
     /*
      * Add bytes from payload size and address.
      */
-    uint8_t checksum = 0;
+    uint32_t checksum = 0;
     checksum += payload_size;
-    checksum += address;
+    checksum += address >> 8;
+    checksum += address & 0xff;
 
     /*
      * Add bytes from payload.
@@ -66,7 +67,7 @@ uint8_t serial_command::checksum()
         checksum += data[i];
     }
 
-    return checksum;
+    return static_cast<uint8_t>(checksum % 256);
 }
 
 /*
@@ -98,15 +99,24 @@ bool serial_frame_handler::buf2queue(uint8_t *buf,
                                      abstract_queue<serial_command> &queue)
 {
     /*
+     * Immediately return if buffer is empty.
+     */
+    if(len == 0)
+    {
+        return false;
+    }
+
+    /*
      * The checksum is the last 2 bytes of the frame.
      */
     uint16_t checksum = (buf[len - 2] << 8) | buf[len - 1];
+    uint16_t calc_crc = crc::crc16(buf, len-2);
 
     /*
      * If the CRC16 checksum in the frame does not match the computed value 
      * then return in failure.
      */
-    if(crc::crc16(buf, len-2) != checksum)
+    if(calc_crc != checksum)
     {
         return false;
     }
@@ -143,6 +153,14 @@ bool serial_frame_handler::buf2queue(uint8_t *buf,
         serial_command command;
         command.payload_size = buf[command_index++];
 
+        /*
+         * Return in failure if indicated payload length is too long.
+         */
+        if(command.payload_size > 8)
+        {
+            return false;
+        }
+
         command.address = (buf[command_index] << 8) | buf[command_index+1];
         command_index += 2;
 
@@ -150,7 +168,7 @@ bool serial_frame_handler::buf2queue(uint8_t *buf,
          * Return in failure if the next bytes (payload + payload checksum + 
          * frame checksum) exceed the input buffer capacity.
          */
-        if(command_index + command.payload_size + 3 >= len)
+        if(command_index + command.payload_size + 3 > len)
         {
             return false;
         }

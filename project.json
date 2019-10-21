@@ -1,9 +1,9 @@
 {
-	"title":"Dumb-Slave",
-	"slot":1,
-	"description":"Dumb slave program for external controller.",
-	"icon":"USER921x.bmp",
-	"version":"beta",
-	"ide":"AFROS",
-	"artifact-path":"build/Dumb-Slave.bin"
+    "title":"Dumb-Slave",
+    "slot":1,
+    "description":"Dumb slave program for external controller.",
+    "icon":"USER912x.bmp",
+    "version":"beta",
+    "ide":"AFROS",
+    "artifact-path":"build/Dumb-Slave.bin"
 }

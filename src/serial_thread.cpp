@@ -19,10 +19,10 @@
  * This function must contain a call to serial_routine for this object to
  * function correctly.
  */
-void serial_thread::init(const vex::brain &brain, 
+void serial_thread::init(vex::brain &brain, 
                          int32_t port,
                          int32_t baudrate,
-                         void(*callback)(void))
+                         int(*callback)(void))
 {   
     brain_ptr = &brain;
     port_ = port;
@@ -31,8 +31,7 @@ void serial_thread::init(const vex::brain &brain,
     /*
      * Create serial communication thread and detach it.
      */
-    ser_thread = vex::thread(callback);
-    ser_thread.detach();
+    ser_thread = vex::task(callback);
 }
 
 /*
@@ -88,7 +87,8 @@ size_t serial_thread::tx_errors()
  *
  * @return The serial command receive queue.
  */
-atomic_ringbuffer<serial_command, serial_thread::QUEUE_SIZE> &serial_thread::rx_queue()
+atomic_ringbuffer<serial_command, serial_thread::QUEUE_SIZE>
+&serial_thread::rx_queue()
 {
     return rx_queue_;
 }
@@ -98,7 +98,8 @@ atomic_ringbuffer<serial_command, serial_thread::QUEUE_SIZE> &serial_thread::rx_
  *
  * @return The serial command transmit queue.
  */
-atomic_ringbuffer<serial_command, serial_thread::QUEUE_SIZE> &serial_thread::tx_queue()
+atomic_ringbuffer<serial_command, serial_thread::QUEUE_SIZE>
+&serial_thread::tx_queue()
 {
     return tx_queue_;
 }
@@ -161,7 +162,9 @@ void serial_thread::serial_routine()
                 /*
                  * COBS encode frame.
                  */
-                size_t tx_len = cobs::encode(decoded_buffer, decoded_buf_len, tx_buf);
+                size_t tx_len = cobs::encode(decoded_buffer,
+                                             decoded_buf_len,
+                                             tx_buf);
 
                 if(tx_len > 0)
                 {
@@ -203,47 +206,20 @@ void serial_thread::serial_routine()
             {
                 rx_buf_len = 0;
 
-                size_t available_bytes = 
-                    static_cast<size_t>(vexDeviceGenericSerialReceiveAvail(smart_port));
-
-                while(available_bytes > 0)
+                int32_t read_char;
+                while((read_char = vexDeviceGenericSerialReadChar(smart_port)) >= 0)
                 {
-                    int32_t read_char = vexDeviceGenericSerialReadChar(smart_port);
 
                     /*
                      * Skip all leading zeroes.
                      */
-                    if(read_char == 0)
-                    {
-                        continue;
-                    }
-
-                    /*
-                     * This should never happen. This means that a read could
-                     * not be made, which should be impossible because there 
-                     * should be at least 1 character in the serial receive buffer.
-                     * Alternately, this means the read character is greater than 0xFF,
-                     * which should never happen for a character that is 1 byte.
-                     */
-                    else if(read_char < 0 || read_char > 0xFF)
-                    {
-                        rx_errors_.set_value(rx_errors_.get_value()+1);
-                        break;
-                    }
-                    
-                    /*
-                     * If character is nonzero and valid, add it to receive frame buffer,
-                     * update state, and break loop.
-                     */
-                    else
+                    if(read_char != 0)
                     {
                         rx_buf[rx_buf_len++] = static_cast<uint8_t>(read_char);
                         rx_timeout = brain_ptr->Timer.system() + TIMEOUT;
                         ser_state = RECEIVING;
                         break;
                     }
-
-                    available_bytes--;
                 }
 
                 break;
@@ -259,12 +235,9 @@ void serial_thread::serial_routine()
                     ser_state = START_RECEIVE;
                 }
 
-                size_t available_bytes = 
-                    static_cast<size_t>(vexDeviceGenericSerialReceiveAvail(smart_port));
-
-                while(available_bytes > 0)
+                int32_t read_char;
+                while((read_char = vexDeviceGenericSerialReadChar(smart_port)) >= 0)
                 {
-                    int32_t read_char = vexDeviceGenericSerialReadChar(smart_port);
 
                     /*
                      * Stop if read character is 0, decode COBS encoded receive frame,
@@ -275,6 +248,13 @@ void serial_thread::serial_routine()
                         size_t decoded_buf_len = cobs::decode(rx_buf,
                                                               rx_buf_len,
                                                               decoded_buffer);
+
+                        if(decoded_buf_len == 0)
+                        {
+                            rx_errors_.set_value(rx_errors_.get_value()+1);
+                            ser_state = START_RECEIVE;
+                            break;
+                        }
 
                         /*
                          * Update frames received and go to tramsmit if queueing successful.
@@ -296,20 +276,6 @@ void serial_thread::serial_routine()
                             ser_state = START_RECEIVE;
                         }
                         
-                        break;
-                    }
-
-                    /*
-                     * This should never happen. This means that a read could
-                     * not be made, which should be impossible because there 
-                     * should be at least 1 character in the serial receive buffer.
-                     * Alternately, this means the read character is greater than 0xFF,
-                     * which should never happen for a character that is 1 byte.
-                     */
-                    else if(read_char < 0 || read_char > 0xFF)
-                    {
-                        rx_errors_.set_value(rx_errors_.get_value()+1);
-                        ser_state = START_RECEIVE;
                         break;
                     }
 

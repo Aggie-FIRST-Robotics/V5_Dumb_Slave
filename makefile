@@ -4,7 +4,7 @@
 VERBOSE = 0
 
 # include toolchain options
-include vex/mkenv.mk
+include mkenv.mk
 
 # location of the project source cpp and c files
 SRC_C  = $(wildcard src/*.cpp) 
@@ -27,4 +27,4 @@ INC_F  = include
 all: $(BUILD)/$(PROJECT).bin
 
 # include build rules
-include vex/mkrules.mk
+include mkrules.mk

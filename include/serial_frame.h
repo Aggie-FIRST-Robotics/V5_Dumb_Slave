@@ -58,10 +58,10 @@ struct serial_command
 namespace serial_frame_handler
 {
     bool buf2queue(uint8_t *buf, 
-                          size_t len,
-                          abstract_queue<serial_command> &queue);
+                   size_t len,
+                   abstract_queue<serial_command> &queue);
 
     size_t queue2buf(abstract_queue<serial_command> &queue,
-                            uint8_t *buf, size_t max_len);
+                     uint8_t *buf, size_t max_len);
 
 }

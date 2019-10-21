@@ -58,7 +58,7 @@ class atomic_primitive
          *
          * @return The value of the primitive.
          */
-        T& get_value()
+        T get_value()
         {
             m.lock();
             T temp = val_;

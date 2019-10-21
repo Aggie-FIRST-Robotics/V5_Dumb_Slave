@@ -9,22 +9,15 @@ sq = $(subst $(sp),?,$1)
 # default platform and build location
 PLATFORM  = vexv5
 BUILD     = build
+PROJECT   = Dumb-Slave
+HOME = C:/Program Files (x86)/VEX Robotics/VEXcode V5 Text
+TOOLCHAIN = ${HOME}/sdk
 
 
 # version for clang headers
 ifneq ("$(origin HEADERS)", "command line")
 HEADERS = 8.0.0
 endif
-
-# Project name passed from app
-ifeq ("$(origin P)", "command line")
-PROJECT   = $(P)
-else
-PROJECT   = $(notdir $(call sq,$(abspath ${CURDIR})))
-endif
-
-HOME = C:/Program Files (x86)/VEX Robotics/VEXcode V5 Text
-TOOLCHAIN = ${HOME}/sdk
 
 # Verbose flag passed from app
 ifeq ("$(origin V)", "command line")

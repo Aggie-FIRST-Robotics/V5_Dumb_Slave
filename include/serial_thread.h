@@ -53,22 +53,22 @@ class serial_thread
     /*
      * The receive timeout period, in milliseconds.
      */
-    static constexpr uint32_t TIMEOUT = 10;
+    static constexpr uint32_t TIMEOUT = 50;
 
     /*
      * The period of each serial routine period, in milliseconds.
      */
-    static constexpr uint32_t ITER_TIME = 2;
+    static constexpr uint32_t ITER_TIME = 1;
 
     public:
 
     /*
      * Running in main thread.
      */
-    void init(const vex::brain &brain,
+    void init(vex::brain &brain,
               int32_t port,
               int32_t baudrate,
-              void(*callback)(void));
+              int(*callback)(void));
     
     void destroy();
     size_t rx_frames();
@@ -92,7 +92,7 @@ class serial_thread
     /*
      * The thread that the serial routine is running on.
      */
-    vex::thread ser_thread;
+    vex::task ser_thread;
 
     /*
      * Synchronized fields.
@@ -136,7 +136,7 @@ class serial_thread
     /*
      * Pointer to global VEX Brain object.
      */
-    const vex::brain *brain_ptr;
+    vex::brain *brain_ptr;
 
     /*
      * ser_thread fields.
@@ -187,4 +187,6 @@ class serial_thread
      * The timestamp when the frame reception times out.
      */
     uint32_t rx_timeout;
+
+    size_t x;
 };

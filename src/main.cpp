@@ -30,9 +30,10 @@ serial_thread port20_serial;
 /*
  * Callback function for serial thread.
  */
-void serial20_callback()
+int serial20_callback()
 {
     port20_serial.serial_routine();
+    return 0;
 }
 
 /*
@@ -51,10 +52,10 @@ int main() {
      */
     while(true)
     {
-        brain.Screen.printAt( 10, 50, "Rx frames: %d", port20_serial.rx_frames() );
-        brain.Screen.printAt( 10, 100, "Tx frames: %d", port20_serial.tx_frames() );
-        brain.Screen.printAt( 10, 150, "Rx errors: %d", port20_serial.rx_errors() );
-        brain.Screen.printAt( 10, 200, "Tx errors: %d", port20_serial.tx_errors() );
+        brain.Screen.printAt( 10, 25, "Rx frames: %d", port20_serial.rx_frames() );
+        brain.Screen.printAt( 10, 50, "Tx frames: %d", port20_serial.tx_frames() );
+        brain.Screen.printAt( 10, 75, "Rx errors: %d", port20_serial.rx_errors() );
+        brain.Screen.printAt( 10, 100, "Tx errors: %d", port20_serial.tx_errors() );
 
         while(!port20_serial.rx_queue().empty())
         {
