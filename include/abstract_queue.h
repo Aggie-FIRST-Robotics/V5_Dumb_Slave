@@ -8,8 +8,8 @@ class abstract_queue
 {
     public:
         
-    virtual void push(const T &element) = 0;
-    virtual T pop() = 0;
+    virtual bool push(const T &element) = 0;
+    virtual bool pop(T &element) = 0;
 
     virtual size_t size() = 0;
 
@@ -19,5 +19,5 @@ class abstract_queue
 
     virtual bool full() = 0;
 
-    virtual void clear() = 0;
+    virtual bool clear() = 0;
 };

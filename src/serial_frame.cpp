@@ -193,7 +193,10 @@ bool serial_frame_handler::buf2queue(uint8_t *buf,
         /*
          * Add command to queue.
          */
-        queue.push(command);
+        if(!queue.push(command))
+        {
+            return false;
+        }
     }
 
     /*
@@ -237,7 +240,12 @@ size_t serial_frame_handler::queue2buf(abstract_queue<serial_command> &queue,
         /*
          * Get next command from queue and increment the command counter.
          */
-        serial_command command = queue.pop();
+        serial_command command;
+        if(!queue.pop(command))
+        {
+            return false;
+        }
+        
         num_commands++;
 
         /*

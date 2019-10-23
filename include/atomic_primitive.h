@@ -8,6 +8,7 @@
 #pragma once
 
 #include "vex.h"
+#include "lockguard.h"
 
 /*
  * A thread safe primitive wrapper class
@@ -36,9 +37,8 @@ class atomic_primitive
          */
         atomic_primitive(const T& initial_val)
         {
-            m.lock();
+            lockguard lock(m);
             val_ = initial_val;
-            m.unlock();
         }
 
         /*
@@ -48,9 +48,8 @@ class atomic_primitive
          */
         void set_value(const T& val)
         {
-            m.lock();
+            lockguard lock(m);
             val_ = val;
-            m.unlock();
         }
 
         /*
@@ -60,9 +59,8 @@ class atomic_primitive
          */
         T get_value()
         {
-            m.lock();
+            lockguard lock(m);
             T temp = val_;
-            m.unlock();
             return temp;
         }
 

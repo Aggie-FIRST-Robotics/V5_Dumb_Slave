@@ -15,7 +15,7 @@ constexpr int32_t port = 19;
 /*
  * Baud rate of serial communication.
  */
-constexpr int32_t baudrate = 115200;
+constexpr int32_t baudrate = 256000;
 
 /*
  * A global instance of vex::brain.
@@ -57,10 +57,7 @@ int main() {
         brain.Screen.printAt( 10, 75, "Rx errors: %d", port20_serial.rx_errors() );
         brain.Screen.printAt( 10, 100, "Tx errors: %d", port20_serial.tx_errors() );
 
-        while(!port20_serial.rx_queue().empty())
-        {
-            port20_serial.rx_queue().pop();
-        }
+        port20_serial.rx_queue().clear();
         
         vex::this_thread::sleep_for(10);
     }

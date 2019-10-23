@@ -1,6 +1,8 @@
 #pragma once
 
+#include "vex.h"
 #include "abstract_queue.h"
+#include "lockguard.h"
 
 template <typename T, size_t CAPACITY>
 class atomic_ringbuffer : public abstract_queue<T>
@@ -37,41 +39,41 @@ class atomic_ringbuffer : public abstract_queue<T>
         return CAPACITY;
     }
 
-    void push(const T &element) override
+    bool push(const T &element) override
     {
         if(!full())
         {
-            m.lock();
+            lockguard lock(m);
             buffer[tail_ptr] = element;
             tail_ptr = (tail_ptr + 1) % CAPACITY;
             size_++;
-            m.unlock();
+            return true;
         }
+
+        return false;
     }
 
-    T pop() override
+    bool pop(T &element) override
     {
-        T retval;
-
         if(!empty())
         {
-            m.lock();
-            retval = buffer[head_ptr];
+            lockguard lock(m);
+            element = buffer[head_ptr];
             head_ptr = (head_ptr + 1) % CAPACITY;
             size_--;
-            m.unlock();
+            return true;
         }
 
-        return retval;
+        return false;
     }
 
-    void clear() override
+    bool clear() override
     {
-        m.lock();
+        lockguard lock(m);
         head_ptr = 0;
         tail_ptr = 0;
         size_ = 0;
-        m.unlock();
+        return true;
     }
 
     private:
