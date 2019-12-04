@@ -518,13 +518,13 @@ public:
         else if(address>=CONTROLLER_AXIS_1_START && address <=CONTROLLER_AXIS_1_END){
             payload[0] =  ( controllers[address-CONTROLLER_AXIS_1_START]->Axis1.value());
         }
-        else if(address>=CONTROLLER_AXIS_2_END && address <=CONTROLLER_AXIS_2_END){
+        else if(address>=CONTROLLER_AXIS_2_START && address <=CONTROLLER_AXIS_2_END){
             payload[0] =  ( controllers[address-CONTROLLER_AXIS_2_END]->Axis2.value());
         }
-        else if(address>=CONTROLLER_AXIS_3_END && address <=CONTROLLER_AXIS_3_END){
+        else if(address>=CONTROLLER_AXIS_3_START && address <=CONTROLLER_AXIS_3_END){
             payload[0] =  ( controllers[address-CONTROLLER_AXIS_3_END]->Axis3.value());
         }
-        else if(address>=CONTROLLER_AXIS_4_END && address <=CONTROLLER_AXIS_4_END) {
+        else if(address>=CONTROLLER_AXIS_4_START && address <=CONTROLLER_AXIS_4_END) {
             payload[0] =  ( controllers[address-CONTROLLER_AXIS_4_END]->Axis4.value());
         }
 
