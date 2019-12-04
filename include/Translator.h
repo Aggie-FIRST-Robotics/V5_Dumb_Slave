@@ -30,15 +30,20 @@ public:
 class Translator{
     static constexpr size_t NUM_MOTORS = 19;
     static constexpr size_t NUM_TRIPORT = 7;
-    static constexpr int16_t Ping = 0;
+    static constexpr int16_t PING = 0;
     static constexpr int16_t GET_V5_FIRMWARE_VERSION = 1;
+    static constexpr int16_t GET_V5_CODE_VERSION =2;
+
     static constexpr int16_t V5_IS_ERRORED = 3;
     static constexpr int16_t V5_ERROR_QUEUE_SIZE=4;
     static constexpr int16_t V5_GET_NEXT_ERROR = 5;
+    static constexpr int16_t V5_GET_ERROR_AT_INDEX = 6;
+
     static constexpr int16_t COMPETITION_IS_ENABLED = 100;
+    static constexpr int16_t COMPETITION_IS_DRIVER_CONTROL = 101;
     static constexpr int16_t COMPETITION_IS_AUTONOMOUS = 102;
     static constexpr int16_t COMPETITION_IS_COMPETITION_SWITCH = 103;
-    static constexpr int16_t COMPETITION_IS_FIELD_CONTROL = 104
+    static constexpr int16_t COMPETITION_IS_FIELD_CONTROL = 104;
     static constexpr int16_t BATTERY_CAPACITY = 105;
     static constexpr int16_t BATTERY_TEMPERATURE = 106;
     static constexpr int16_t BATTERY_VOLTAGE = 107;
@@ -115,6 +120,10 @@ class Translator{
     mem_pool<POOL_SIZE> pool;
     vex::motor* motors[NUM_MOTORS];
     vex::triport* triports[NUM_TRIPORT];
+    vex::controller* controllers[2];
+    vex::competition* competition;
+    vex::brain::battery* battery;
+
 
 public:
 
@@ -126,6 +135,27 @@ public:
         for(size_t x = 0; x < NUM_TRIPORT; x++){
             auto mem = pool.alloc(sizeof(vex::triport));
             triports[x] = new(mem) vex::triport{int32_t(x)};
+        }
+        for(size_t x = 0; x < 2; x++){
+            auto mem = pool.alloc(sizeof(vex::controller));
+            if(x == 0)
+            controllers[x] = new(mem) vex::controller{vex::primary};
+            else
+            controllers[x] = new(mem) vex::controller{vex::partner};
+        }
+        for(size_t x = 0; x < 1; x++){
+            auto mem = pool.alloc(sizeof(vex::competition));
+            if(x == 0)
+                competition = new(mem) vex::competition{};
+            else
+                competition = new(mem) vex::competition{};
+        }
+        for(size_t x = 0; x < 1; x++){
+            auto mem = pool.alloc(sizeof(vex::brain::battery));
+            if(x == 0)
+                battery = new(mem) vex::brain::battery{};
+            else
+                battery = new(mem) vex::brain::battery{};
         }
 
     }
@@ -224,38 +254,45 @@ public:
             int abs = address - TRIPORT_SET_PWM_START;
             for (int x = 0; x < payload_len; x++) {
                 if(abs==0){
-                    triports[0]->A.setRotation(payload[x]);
+                    triports[0]->A.setRotation(payload[x], vex::rotationUnits());
 
                 }
                 else if(abs==1){
-                    triports[0]->B.setRotation(payload[x]);
+                    triports[0]->B.setRotation(payload[x], vex::rotationUnits());
 
                 }
                 else if(abs==2){
-                    triports[0]->C.setRotation(payload[x]);
+                    triports[0]->C.setRotation(payload[x], vex::rotationUnits());
 
                 }
                 else if(abs==3){
-                    triports[0]->D.setRotation(payload[x]);
+                    triports[0]->D.setRotation(payload[x], vex::rotationUnits());
 
                 }
                 else if(abs==4){
-                    triports[0]->E.setRotation(payload[x]);
+                    triports[0]->E.setRotation(payload[x], vex::rotationUnits());
 
                 }
                 else if(abs==5){
-                    triports[0]->F.setRotation(payload[x]);
+                    triports[0]->F.setRotation(payload[x], vex::rotationUnits());
 
                 }
                 else if(abs==6){
-                    triports[0]->G.setRotation(payload[x]);
+                    triports[0]->G.setRotation(payload[x], vex::rotationUnits());
 
                 }
                 else if(abs==7){
-                    triports[0]->H.setRotation(payload[x]);
+                    triports[0]->H.setRotation(payload[x], vex::rotationUnits());
 
                 }
             }
+        }
+        else if(address == PING)
+        {
+           //Ping should go here, in theory
+        }
+        else{
+            return false;
         }
 
 
@@ -276,6 +313,225 @@ public:
     {
         if(address<0x8000)
             return false;
+        else if(address==GET_V5_FIRMWARE_VERSION){
+            //where is this?
+            return true;
+        }
+        else if(address == GET_V5_CODE_VERSION){
+            return true;
+
+        }
+        else if(address == V5_IS_ERRORED){
+            return true;
+
+        }
+        else if(address == V5_ERROR_QUEUE_SIZE){
+            return true;
+
+        }
+        else if(address == V5_GET_NEXT_ERROR){
+            return true;
+
+        }
+        else if(address == V5_GET_ERROR_AT_INDEX){
+            return true;
+
+        }
+        else if(address == COMPETITION_IS_ENABLED){
+            payload[0] = competition->isEnabled();
+            return true;
+        }
+        else if(address == COMPETITION_IS_DRIVER_CONTROL){
+            payload[0] = competition->isDriverControl();
+            return true;
+        }
+        else if(address == COMPETITION_IS_AUTONOMOUS){
+            payload[0] = competition->isAutonomous();
+            return true;
+        }
+        else if(address == COMPETITION_IS_COMPETITION_SWITCH){
+            payload[0] = competition->isCompetitionSwitch();
+            return true;
+        }
+        else if(address == COMPETITION_IS_FIELD_CONTROL){
+            payload[0] = competition->isFieldControl();
+            return true;
+        }
+        else if(address == BATTERY_CAPACITY){
+            payload[0] = battery->capacity(vex::percentUnits());
+            return true;
+        }
+        else if(address == BATTERY_TEMPERATURE){
+            payload[0] = battery->temperature(vex::temperatureUnits ());
+            return true;
+        }
+        else if(address == BATTERY_VOLTAGE){
+            payload[0] = battery->voltage(vex::volt);
+            return true;
+        }
+        else if(address == BATTERY_CURRENT){
+            payload[0] = battery->current(vex::amp);
+            return true;
+        }
+        else if(address>=MOTOR_SET_ENCODER_START && address <=MOTOR_SET_ENCODER_END) {
+            int abs = address - MOTOR_SET_ENCODER_START;
+            //what do we do here?
+            return true;
+
+
+        }
+        else if(address>=MOTOR_GET_VELOCITY_START && address <=MOTOR_GET_VELOCITY_END){
+            int abs = address-MOTOR_GET_VELOCITY_START;
+            payload[0] = motors[abs]->velocity(vex::percentUnits());
+
+            return true;
+        }
+        else if(address>=MOTOR_GET_CURRENT_START && address <=MOTOR_GET_CURRENT_END){
+            int abs = address-MOTOR_GET_CURRENT_START;
+            payload[0] = motors[abs]->current(vex::percentUnits());
+
+            return true;
+        }
+        else if(address>=MOTOR_GET_POWER_START && address <=MOTOR_GET_POWER_END){
+            int abs = address-MOTOR_GET_POWER_START;
+            payload[0] = motors[abs]->power(vex::powerUnits());
+
+            return true;
+        }
+        else if(address>=MOTOR_GET_TEMPERATURE_START && address <=MOTOR_GET_TEMPERATURE_END){
+            int abs = address-MOTOR_GET_TEMPERATURE_START;
+            payload[0] = motors[abs]->temperature(vex::temperatureUnits());
+
+            return true;
+        }
+        else if(address>=TRIPORT_GET_DIGITAL_START && address <=TRIPORT_GET_DIGITAL_END){
+            int abs = address - TRIPORT_GET_DIGITAL_START;
+            if(abs==0){
+                triports[0]->A.value();
+
+            }
+            else if(abs==1){
+                triports[0]->B.value();
+
+            }
+            else if(abs==2){
+                triports[0]->C.value();
+
+            }
+            else if(abs==3){
+                triports[0]->D.value();
+
+            }
+            else if(abs==4){
+                triports[0]->E.value();
+
+            }
+            else if(abs==5){
+                triports[0]->F.value();
+
+            }
+            else if(abs==6){
+                triports[0]->G.value();
+
+            }
+            else if(abs==7){
+                triports[0]->H.value();
+
+            }
+
+            return true;
+        }
+
+        else if(address>=TRIPORT_GET_ANALOG_START && address <=TRIPORT_GET_ANALOG_END){
+            int abs = address - TRIPORT_GET_ANALOG_START;
+            if(abs==0){
+                triports[0]->A.rotation(vex::rotationUnits());
+
+            }
+            else if(abs==1){
+                triports[0]->B.rotation(vex::rotationUnits());
+
+            }
+            else if(abs==2){
+                triports[0]->C.rotation(vex::rotationUnits());
+
+            }
+            else if(abs==3){
+                triports[0]->D.rotation(vex::rotationUnits());
+
+            }
+            else if(abs==4){
+                triports[0]->E.rotation(vex::rotationUnits());
+
+            }
+            else if(abs==5){
+                triports[0]->F.rotation(vex::rotationUnits());
+
+            }
+            else if(abs==6){
+                triports[0]->G.rotation(vex::rotationUnits());
+
+            }
+            else if(abs==7){
+                triports[0]->H.rotation(vex::rotationUnits());
+
+            }
+
+            return true;
+        }
+        else if(address>=CONTROLLER_BUTTON_L1_START && address <=CONTROLLER_BUTTON_L1_END){
+            payload[0] = bool (controllers[address-CONTROLLER_BUTTON_L1_START]->ButtonL1.PRESSED);
+        }
+        else if(address>=CONTROLLER_BUTTON_L2_START && address <=CONTROLLER_BUTTON_L2_END){
+            payload[0] = bool (controllers[address-CONTROLLER_BUTTON_L2_START]->ButtonL2.PRESSED);
+        }
+        else if(address>=CONTROLLER_BUTTON_R1_START && address <=CONTROLLER_BUTTON_R1_END){
+            payload[0] = bool (controllers[address-CONTROLLER_BUTTON_R1_START]->ButtonR1.PRESSED);
+        }
+        else if(address>=CONTROLLER_BUTTON_R2_START && address <=CONTROLLER_BUTTON_R2_END){
+            payload[0] = bool ( controllers[address-CONTROLLER_BUTTON_R2_START]->ButtonR2.PRESSED);
+        }
+        else if(address>=CONTROLLER_BUTTON_UP_START && address <=CONTROLLER_BUTTON_UP_END){
+            payload[0] = bool ( controllers[address-CONTROLLER_BUTTON_UP_START]->ButtonUp.PRESSED);
+        }
+        else if(address>=CONTROLLER_BUTTON_DOWN_START && address <=CONTROLLER_BUTTON_DOWN_END){
+            payload[0] = bool (  controllers[address-CONTROLLER_BUTTON_DOWN_START]->ButtonDown.PRESSED);
+        }
+        else if(address>=CONTROLLER_BUTTON_LEFT_START && address <=CONTROLLER_BUTTON_LEFT_END){
+            payload[0] = bool ( controllers[address-CONTROLLER_BUTTON_LEFT_START]->ButtonLeft.PRESSED);
+        }
+        else if(address>=CONTROLLER_BUTTON_RIGHT_START && address <=CONTROLLER_BUTTON_RIGHT_END) {
+            payload[0] = bool(controllers[address - CONTROLLER_BUTTON_RIGHT_START]->ButtonRight.PRESSED);
+        }
+        else if(address>=CONTROLLER_BUTTON_X_START && address <=CONTROLLER_BUTTON_X_END){
+            payload[0] = bool ( controllers[address-CONTROLLER_BUTTON_X_START]->ButtonX.PRESSED);
+        }
+        else if(address>=CONTROLLER_BUTTON_B_START && address <=CONTROLLER_BUTTON_B_END){
+            payload[0] = bool (  controllers[address-CONTROLLER_BUTTON_B_START]->ButtonB.PRESSED);
+        }
+        else if(address>=CONTROLLER_BUTTON_Y_START && address <=CONTROLLER_BUTTON_Y_END){
+            payload[0] = bool ( controllers[address-CONTROLLER_BUTTON_Y_START]->ButtonY.PRESSED);
+        }
+        else if(address>=CONTROLLER_BUTTON_A_START && address <=CONTROLLER_BUTTON_A_END) {
+            payload[0] = bool(controllers[address - CONTROLLER_BUTTON_A_START]->ButtonA.PRESSED);
+        }
+        else if(address>=CONTROLLER_AXIS_1_START && address <=CONTROLLER_AXIS_1_END){
+            payload[0] =  ( controllers[address-CONTROLLER_AXIS_1_START]->Axis1.value());
+        }
+        else if(address>=CONTROLLER_AXIS_2_END && address <=CONTROLLER_AXIS_2_END){
+            payload[0] =  ( controllers[address-CONTROLLER_AXIS_2_END]->Axis2.value());
+        }
+        else if(address>=CONTROLLER_AXIS_3_END && address <=CONTROLLER_AXIS_3_END){
+            payload[0] =  ( controllers[address-CONTROLLER_AXIS_3_END]->Axis3.value());
+        }
+        else if(address>=CONTROLLER_AXIS_4_END && address <=CONTROLLER_AXIS_4_END) {
+            payload[0] =  ( controllers[address-CONTROLLER_AXIS_4_END]->Axis4.value());
+        }
+
+
+
+
+
         //get from table
 
 
