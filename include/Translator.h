@@ -12,6 +12,7 @@
 #include <vector>
 #include "v5_api.h"
 #include "vex_motor.h"
+#include "main.h"
 
 template<size_t L>
 class mem_pool{
@@ -28,6 +29,8 @@ public:
 };
 
 class Translator{
+    int errors = 0;
+
     static constexpr size_t NUM_MOTORS = 19;
     static constexpr size_t NUM_TRIPORT = 7;
     static constexpr int16_t PING = 0;
@@ -111,6 +114,10 @@ class Translator{
     static constexpr int16_t CONTROLLER_AXIS_3_END = 341;
     static constexpr int16_t CONTROLLER_AXIS_4_START = 342;
     static constexpr int16_t CONTROLLER_AXIS_4_END = 343;
+    static constexpr int16_t GET_TX_ERROR = 344;
+    static constexpr int16_t GET_RX_ERROR = 345;
+    static constexpr int16_t GET_GENERAL_ERROR = 346;
+    static constexpr int16_t GET_DEBUG_ERROR = 347;
 
 
 
@@ -200,6 +207,8 @@ public:
             return true;
 
             */
+           return false;
+
 
         }
         else if(address>=MOTOR_SET_VOLTAGE_START && address <=MOTOR_SET_VOLTAGE_END) {
@@ -315,9 +324,13 @@ public:
             return false;
         else if(address==GET_V5_FIRMWARE_VERSION){
             //where is this?
+
             return true;
         }
         else if(address == GET_V5_CODE_VERSION){
+
+
+
             return true;
 
         }
@@ -327,6 +340,7 @@ public:
         }
         else if(address == V5_ERROR_QUEUE_SIZE){
             return true;
+            //get error, get tx error, get rx error, getdebug error 4 bytes uint32
 
         }
         else if(address == V5_GET_NEXT_ERROR){
@@ -481,51 +495,86 @@ public:
         }
         else if(address>=CONTROLLER_BUTTON_L1_START && address <=CONTROLLER_BUTTON_L1_END){
             payload[0] = bool (controllers[address-CONTROLLER_BUTTON_L1_START]->ButtonL1.PRESSED);
+            return true;
         }
         else if(address>=CONTROLLER_BUTTON_L2_START && address <=CONTROLLER_BUTTON_L2_END){
             payload[0] = bool (controllers[address-CONTROLLER_BUTTON_L2_START]->ButtonL2.PRESSED);
+            return true;
         }
         else if(address>=CONTROLLER_BUTTON_R1_START && address <=CONTROLLER_BUTTON_R1_END){
             payload[0] = bool (controllers[address-CONTROLLER_BUTTON_R1_START]->ButtonR1.PRESSED);
+            return true;
         }
         else if(address>=CONTROLLER_BUTTON_R2_START && address <=CONTROLLER_BUTTON_R2_END){
             payload[0] = bool ( controllers[address-CONTROLLER_BUTTON_R2_START]->ButtonR2.PRESSED);
+            return true;
         }
         else if(address>=CONTROLLER_BUTTON_UP_START && address <=CONTROLLER_BUTTON_UP_END){
             payload[0] = bool ( controllers[address-CONTROLLER_BUTTON_UP_START]->ButtonUp.PRESSED);
+            return true;
         }
         else if(address>=CONTROLLER_BUTTON_DOWN_START && address <=CONTROLLER_BUTTON_DOWN_END){
             payload[0] = bool (  controllers[address-CONTROLLER_BUTTON_DOWN_START]->ButtonDown.PRESSED);
+            return true;
         }
         else if(address>=CONTROLLER_BUTTON_LEFT_START && address <=CONTROLLER_BUTTON_LEFT_END){
             payload[0] = bool ( controllers[address-CONTROLLER_BUTTON_LEFT_START]->ButtonLeft.PRESSED);
+            return true;
         }
         else if(address>=CONTROLLER_BUTTON_RIGHT_START && address <=CONTROLLER_BUTTON_RIGHT_END) {
             payload[0] = bool(controllers[address - CONTROLLER_BUTTON_RIGHT_START]->ButtonRight.PRESSED);
+            return true;
         }
         else if(address>=CONTROLLER_BUTTON_X_START && address <=CONTROLLER_BUTTON_X_END){
             payload[0] = bool ( controllers[address-CONTROLLER_BUTTON_X_START]->ButtonX.PRESSED);
+            return true;
         }
         else if(address>=CONTROLLER_BUTTON_B_START && address <=CONTROLLER_BUTTON_B_END){
             payload[0] = bool (  controllers[address-CONTROLLER_BUTTON_B_START]->ButtonB.PRESSED);
+            return true;
         }
         else if(address>=CONTROLLER_BUTTON_Y_START && address <=CONTROLLER_BUTTON_Y_END){
             payload[0] = bool ( controllers[address-CONTROLLER_BUTTON_Y_START]->ButtonY.PRESSED);
+            return true;
         }
         else if(address>=CONTROLLER_BUTTON_A_START && address <=CONTROLLER_BUTTON_A_END) {
             payload[0] = bool(controllers[address - CONTROLLER_BUTTON_A_START]->ButtonA.PRESSED);
+            return true;
         }
         else if(address>=CONTROLLER_AXIS_1_START && address <=CONTROLLER_AXIS_1_END){
             payload[0] =  ( controllers[address-CONTROLLER_AXIS_1_START]->Axis1.value());
+            return true;
         }
         else if(address>=CONTROLLER_AXIS_2_START && address <=CONTROLLER_AXIS_2_END){
             payload[0] =  ( controllers[address-CONTROLLER_AXIS_2_END]->Axis2.value());
+            return true;
         }
         else if(address>=CONTROLLER_AXIS_3_START && address <=CONTROLLER_AXIS_3_END){
             payload[0] =  ( controllers[address-CONTROLLER_AXIS_3_END]->Axis3.value());
+            return true;
         }
         else if(address>=CONTROLLER_AXIS_4_START && address <=CONTROLLER_AXIS_4_END) {
             payload[0] =  ( controllers[address-CONTROLLER_AXIS_4_END]->Axis4.value());
+            return true;
+        }
+        else if(address==GET_TX_ERROR) {
+            payload[0] = (port20_serial.tx_errors());
+            return true;
+        }
+        else if(address==GET_RX_ERROR) {
+            payload[0] = (port20_serial.rx_errors());
+
+            return true;
+        }
+        else if(address==GET_GENERAL_ERROR) {
+            payload[0] = (errors);
+            errors++;
+            return true;
+        }
+        else if(address==GET_DEBUG_ERROR) {
+            return false;        }
+        else{
+            return false;
         }
 
 
