@@ -6,6 +6,7 @@
  */
 #include "vex.h"
 #include "serial_thread.h"
+#include "Translator.h"
 
 /*
  * Port number used for serial communication.
@@ -36,6 +37,8 @@ int serial20_callback()
     return 0;
 }
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wmissing-noreturn"
 /*
  * Main application function.
  */
@@ -62,3 +65,4 @@ int main() {
         vex::this_thread::sleep_for(10);
     }
 }
+#pragma clang diagnostic pop
