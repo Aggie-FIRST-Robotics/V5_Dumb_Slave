@@ -30,7 +30,8 @@ public:
 
 class Translator{
     int errors = 0;
-
+    int V5_CODE_VERSION = 1;
+    int V5_FIRMWARE_VERSION = 1;
     static constexpr size_t NUM_MOTORS = 19;
     static constexpr size_t NUM_TRIPORT = 7;
     static constexpr int16_t PING = 0;
@@ -324,12 +325,14 @@ public:
             return false;
         else if(address==GET_V5_FIRMWARE_VERSION){
             //where is this?
+            payload[0] = V5_FIRMWARE_VERSION;
+
 
             return true;
         }
         else if(address == GET_V5_CODE_VERSION){
 
-
+            payload[0] = V5_CODE_VERSION;
 
             return true;
 
